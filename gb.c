@@ -40,5 +40,15 @@ int main(int argc , char *argv[])
         fclose(file);
         printf("Global name has been applied successfuly\n");
     }
+    
+    else if (!strcmp(argv[1] , "config") &&  !strcmp(argv[3] , "user.email")) //git config –-global user.email " "
+    {
+        FILE *file;
+        file = fopen("D:\\myproject\\files\\global-email.txt" , "w");
+        fprintf(file , "%s" , argv[argc - 1]);
+        fclose(file);
+        printf("Global email has been applied successfuly\n");
+    }
+
     return 0;
 }
