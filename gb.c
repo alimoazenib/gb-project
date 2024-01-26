@@ -6,6 +6,38 @@
 
 int main(int argc , char *argv[])
 {
+
+    {// check the alias command
+    FILE *filealias;
+    filealias = fopen("D:\\myproject\\files\\alias-commands.txt" , "r");
+
+    char line[1000];
+    fgets(line , sizeof(line) , filealias);
+    char *tokenPtr = strtok(line , ">");
+
+    while (tokenPtr != NULL) 
+    {
+        if (!strncmp(tokenPtr , argv[1] , strlen(tokenPtr)))
+        {
+            tokenPtr = strtok(NULL, ">?");
+
+            char *tokenPtr1 = strtok(tokenPtr , " ");
+
+            for (int i = 0 ; tokenPtr1 != NULL ; i++)
+            {
+                argv[i] = tokenPtr1;
+                argc++;
+            tokenPtr1 = strtok(NULL, " ");
+            }
+            
+            break;
+        }
+        tokenPtr = strtok(NULL, ">?");
+    }
+
+    fclose(filealias);
+    }
+    
     if      (!strcmp(argv[1] , "config") &&  !strcmp(argv[2] , "user.name" )) //git config user.name " "
     {
         FILE *file;
