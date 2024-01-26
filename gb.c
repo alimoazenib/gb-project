@@ -50,5 +50,38 @@ int main(int argc , char *argv[])
         printf("Global email has been applied successfuly\n");
     }
 
+    else if (!strcmp(argv[1] , "config") && !strncmp(argv[3] , "alias." , 6)) //git config --global alias.sth "sth"
+    {
+        FILE *file;
+        file = fopen("D:\\myproject\\files\\valid-commands.txt" , "r");
+
+        int isinvalid = 0;
+        char line[100];
+        fgets(line , 100 , file);
+        char *tokenPtr = strtok(line , "?");
+        while (tokenPtr != NULL) 
+        {
+            if (!strncmp(tokenPtr , argv[4] , strlen(tokenPtr)))
+            {
+                isinvalid = 1;
+                break;
+            }
+            tokenPtr = strtok(NULL, "?");
+        }
+
+        if (isinvalid == 1)
+        {
+            FILE *file1;
+            file1 = fopen("D:\\myproject\\files\\alias-commands.txt" , "a");
+            fprintf(file1 , ">%s>%s?" , argv[3]+6 , argv[4]);
+            fclose(file1);
+        }
+
+        else
+            printf("The command you are trying to add an alias to is invalid\n");
+        
+        fclose(file);
+    }
+    
     return 0;
 }
