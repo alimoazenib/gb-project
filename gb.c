@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <dirent.h>
+#include <windows.h>
 
 bool CheckExistGbFolder()
 {
@@ -190,6 +191,23 @@ int main(int argc , char *argv[])
         
         fclose(file);
         
+    }
+
+    else if (!strcmp(argv[1] , "init")) // git init
+    {
+        char cwd[1024];
+        getcwd(cwd, sizeof(cwd));
+
+        if (CheckExistGbFolder())
+            printf("Gb repository already exists\n");
+        
+        else
+        {
+            chdir(cwd);
+            CreateDirectory(".gb" , NULL);
+            SetFileAttributes(".gb" , FILE_ATTRIBUTE_HIDDEN);
+            printf("Initialized empty Gb repository\n");
+        }
     }
     
     return 0;
