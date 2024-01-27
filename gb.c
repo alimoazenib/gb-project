@@ -3,6 +3,43 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
+#include <dirent.h>
+
+bool CheckExistGbFolder()
+{
+    char cwd[1024];
+    getcwd(cwd, sizeof(cwd));
+
+    struct dirent *entry;
+    while (1)
+    {
+        // find .gb
+        DIR *dir = opendir(".");
+        if (dir == NULL) 
+        {
+            perror("Error opening current directory");
+            return 1;
+        }
+
+        bool parent = false;
+        while ((entry = readdir(dir)) != NULL) 
+        {
+            if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".gb") == 0)
+                return true;
+
+            if (strcmp(entry->d_name, "..") == 0)
+                parent = true;
+        }
+        
+        closedir(dir);
+
+        chdir("..");
+
+        if (!parent)
+            return false;
+    }
+}
 
 int main(int argc , char *argv[])
 {
@@ -27,7 +64,7 @@ int main(int argc , char *argv[])
             {
                 argv[i] = tokenPtr1;
                 argc++;
-            tokenPtr1 = strtok(NULL, " ");
+                tokenPtr1 = strtok(NULL, " ");
             }
             
             break;
