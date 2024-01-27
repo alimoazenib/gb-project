@@ -46,7 +46,7 @@ int main(int argc , char *argv[])
 
     {// check the alias command
     FILE *filealias;
-    filealias = fopen("D:\\myproject\\files\\alias-commands.txt" , "r");
+    filealias = fopen("D:\\gb-project\\files\\alias-commands.txt" , "r");
 
     char line[1000];
     fgets(line , sizeof(line) , filealias);
@@ -104,7 +104,7 @@ int main(int argc , char *argv[])
     else if (!strcmp(argv[1] , "config") &&  !strcmp(argv[3] , "user.name" )) //git config -–global user.name " "
     {
         FILE *file;
-        file = fopen("D:\\myproject\\files\\global-name.txt" , "w");
+        file = fopen("D:\\gb-project\\files\\global-name.txt" , "w");
         fprintf(file , "%s" , argv[argc - 1]);
         fclose(file);
         printf("Global name has been applied successfuly\n");
@@ -113,7 +113,7 @@ int main(int argc , char *argv[])
     else if (!strcmp(argv[1] , "config") &&  !strcmp(argv[3] , "user.email")) //git config –-global user.email " "
     {
         FILE *file;
-        file = fopen("D:\\myproject\\files\\global-email.txt" , "w");
+        file = fopen("D:\\gb-project\\files\\global-email.txt" , "w");
         fprintf(file , "%s" , argv[argc - 1]);
         fclose(file);
         printf("Global email has been applied successfuly\n");
@@ -122,7 +122,7 @@ int main(int argc , char *argv[])
     else if (!strcmp(argv[1] , "config") && !strncmp(argv[3] , "alias." , 6)) //git config --global alias.sth "sth"
     {
         FILE *file;
-        file = fopen("D:\\myproject\\files\\valid-commands.txt" , "r");
+        file = fopen("D:\\gb-project\\files\\valid-commands.txt" , "r");
 
         int isinvalid = 0;
         char line[100];
@@ -141,7 +141,7 @@ int main(int argc , char *argv[])
         if (isinvalid == 1)
         {
             FILE *file1;
-            file1 = fopen("D:\\myproject\\files\\alias-commands.txt" , "a");
+            file1 = fopen("D:\\gb-project\\files\\alias-commands.txt" , "a");
             fprintf(file1 , ">%s>%s?" , argv[3]+6 , argv[4]);
             fclose(file1);
         }
@@ -155,7 +155,7 @@ int main(int argc , char *argv[])
     else if (!strcmp(argv[1] , "config") && !strncmp(argv[2] , "alias." , 6)) //git config alias.sth "sth"
     {
         FILE *file;
-        file = fopen("D:\\myproject\\files\\valid-commands.txt" , "r");
+        file = fopen("D:\\gb-project\\files\\valid-commands.txt" , "r");
 
         int isinvalid = 0;
         char line[100];
