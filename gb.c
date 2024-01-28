@@ -73,6 +73,9 @@ int main(int argc , char *argv[])
         tokenPtr = strtok(NULL, ">?");
     }
 
+    if (!strcmp(argv[1] , "config"))
+        argc -= 2;
+    
     fclose(filealias);
     }
     
@@ -87,6 +90,7 @@ int main(int argc , char *argv[])
         }
         fprintf(file , "%s" , argv[argc - 1]);
         fclose(file);
+            
     }
 
     else if (!strcmp(argv[1] , "config") &&  !strcmp(argv[2] , "user.email")) //git config user.email " "
