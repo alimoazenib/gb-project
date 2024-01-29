@@ -258,6 +258,8 @@ int main(int argc , char *argv[])
             chdir(cwd);
             CreateDirectory(".gb" , NULL);
             SetFileAttributes(".gb" , FILE_ATTRIBUTE_HIDDEN);
+            CreateDirectory(".gb\\stage" , NULL);
+            CreateDirectory(".gb\\commits" , NULL);
             printf("Initialized empty Gb repository\n");
         }
     }
