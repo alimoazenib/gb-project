@@ -60,36 +60,24 @@ bool file_or_folder(char *path) {
 int main(int argc , char *argv[])
 {
 
-    {// check the alias command
+    {// checking the alias command
     FILE *filealias;
     filealias = fopen("D:\\gb-project\\files\\alias-commands.txt" , "r");
 
     char line[1000];
     fgets(line , sizeof(line) , filealias);
     char *tokenPtr = strtok(line , ">");
-
     while (tokenPtr != NULL) 
     {
-        if (!strncmp(tokenPtr , argv[1] , strlen(tokenPtr)))
+        if (!strncmp(tokenPtr , argv[1] , strlen(argv[1])))
         {
             tokenPtr = strtok(NULL, ">?");
-
-            char *tokenPtr1 = strtok(tokenPtr , " ");
-
-            for (int i = 0 ; tokenPtr1 != NULL ; i++)
-            {
-                argv[i] = tokenPtr1;
-                argc++;
-                tokenPtr1 = strtok(NULL, " ");
-            }
-            
-            break;
+            system(tokenPtr);   
+            fclose(filealias);
+            return 0;
         }
         tokenPtr = strtok(NULL, ">?");
     }
-
-    if (!strcmp(argv[1] , "config"))
-        argc -= 2;
     
     fclose(filealias);
     }
@@ -202,6 +190,7 @@ int main(int argc , char *argv[])
             }
 
             fprintf(file1 , ">%s>%s?" , argv[2]+6 , argv[3]);
+            printf("local alias successfully created\n");
             fclose(file1);
         }
 
