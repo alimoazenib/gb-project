@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include <dirent.h>
 #include <windows.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 bool CheckExistGbFolder()
 {
@@ -40,6 +42,19 @@ bool CheckExistGbFolder()
         if (!parent)
             return false;
     }
+}
+
+bool file_or_folder(char *path) {
+    struct stat s;
+    if (stat(path, &s) == 0) 
+    {
+        if (s.st_mode & S_IFDIR) 
+            return false;
+        else if (s.st_mode & S_IFREG) 
+            return true;
+    }
+    else
+        printf("Error occurred\n");
 }
 
 int main(int argc , char *argv[])
