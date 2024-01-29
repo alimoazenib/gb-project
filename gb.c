@@ -229,5 +229,27 @@ int main(int argc , char *argv[])
         }
     }
     
+    else if (!strcmp(argv[1] , "add" )) // git add
+    {
+        char cwd[1024];
+        getcwd(cwd, sizeof(cwd));
+
+        if (!CheckExistGbFolder())
+            printf("fatal: not a Gb repository (or any of the parent directories)\n");
+        
+        else
+        {
+            char pathh[100];
+            
+            sprintf(pathh , "%s\\%s" , cwd , argv[2]);
+
+            if(file_or_folder(pathh))
+                printf("file\n");
+    
+            else
+                printf("dir\n");
+        }
+    }
+    
     return 0;
 }
