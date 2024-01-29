@@ -148,10 +148,33 @@ int main(int argc , char *argv[])
 
         if (isinvalid == 1)
         {
-            FILE *file1;
-            file1 = fopen("D:\\gb-project\\files\\alias-commands.txt" , "a");
-            fprintf(file1 , ">%s>%s?" , argv[3]+6 , argv[4]);
-            fclose(file1);
+            FILE *filealias;
+            filealias = fopen("D:\\gb-project\\files\\alias-commands.txt" , "r");
+            bool exist = 0;
+            char line[1000];
+            fgets(line , sizeof(line) , filealias);
+            char *tokenPtr = strtok(line , ">");
+            while (tokenPtr != NULL) 
+            {
+                if (!strcmp(tokenPtr , argv[3]+6))
+                {
+                    exist = 1;
+                    break;;
+                }
+                tokenPtr = strtok(NULL, ">?");
+            }
+
+            if (exist == 0)
+            {           
+                FILE *file1;
+                file1 = fopen("D:\\gb-project\\files\\alias-commands.txt" , "a");
+                fprintf(file1 , ">%s>%s?" , argv[3]+6 , argv[4]);
+                printf("global alias successfully created\n");
+                fclose(file1);
+            }
+
+            else
+                printf("This alias is already exists\n");
         }
 
         else
@@ -189,9 +212,30 @@ int main(int argc , char *argv[])
                 return 0;
             }
 
-            fprintf(file1 , ">%s>%s?" , argv[2]+6 , argv[3]);
-            printf("local alias successfully created\n");
-            fclose(file1);
+            FILE *filealias;
+            filealias = fopen(".gb\\alias-commands.txt" , "r");
+            bool exist = 0;
+            char line[1000];
+            fgets(line , sizeof(line) , filealias);
+            char *tokenPtr = strtok(line , ">");
+            while (tokenPtr != NULL) 
+            {
+                if (!strcmp(tokenPtr , argv[3]+6))
+                {
+                    exist = 1;
+                    break;;
+                }
+                tokenPtr = strtok(NULL, ">?");
+            }
+
+            if(exist == 0)
+            {
+                fprintf(file1 , ">%s>%s?" , argv[2]+6 , argv[3]);
+                printf("local alias successfully created\n");
+                fclose(file1);
+            }
+            else
+                printf("This alias is already exists\n");
         }
 
         else
