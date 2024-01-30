@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <dirent.h>
 #include <windows.h>
@@ -60,30 +61,60 @@ bool file_or_folder(char *path) {
 int main(int argc , char *argv[])
 {
 
+    char cwd[1024];
+    getcwd(cwd, sizeof(cwd));
     {// checking the alias command
-    FILE *filealias;
-    filealias = fopen("D:\\gb-project\\files\\alias-commands.txt" , "r");
-
-    char line[1000];
-    fgets(line , sizeof(line) , filealias);
-    char *tokenPtr = strtok(line , ">");
-    while (tokenPtr != NULL) 
+    CheckExistGbFolder();
+    FILE *lfilealias;
+    lfilealias = fopen(".gb\\alias-commands.txt" , "r");
+    if (lfilealias == NULL)
     {
-        if (!strncmp(tokenPtr , argv[1] , strlen(argv[1])))
+        FILE *filealias;
+        filealias = fopen("D:\\gb-project\\files\\alias-commands.txt" , "r");
+
+        char line[1000];
+        fgets(line , sizeof(line) , filealias);
+        char *tokenPtr = strtok(line , ">");
+        while (tokenPtr != NULL) 
         {
+            if (!strncmp(tokenPtr , argv[1] , strlen(argv[1])))
+            {
+                tokenPtr = strtok(NULL, ">?");
+                system(tokenPtr);   
+                fclose(filealias);
+                return 0;
+            }
             tokenPtr = strtok(NULL, ">?");
-            system(tokenPtr);   
-            fclose(filealias);
-            return 0;
         }
-        tokenPtr = strtok(NULL, ">?");
+        
+        fclose(filealias);
     }
-    
-    fclose(filealias);
+
+    else
+    {
+        char line[1000];
+        fgets(line , sizeof(line) , lfilealias);
+        char *tokenPtr = strtok(line , ">");
+        while (tokenPtr != NULL) 
+        {
+            if (!strncmp(tokenPtr , argv[1] , strlen(argv[1])))
+            {
+                tokenPtr = strtok(NULL, ">?");
+                system(tokenPtr);   
+                fclose(lfilealias);
+                return 0;
+            }
+            tokenPtr = strtok(NULL, ">?");
+        }
+        
+        fclose(lfilealias);
     }
+    }
+    chdir(cwd);
     
     if      (!strcmp(argv[1] , "config") &&  !strcmp(argv[2] , "user.name" )) //git config user.name " "
     {
+        CheckExistGbFolder();
         FILE *file;
         file = fopen(".gb/local-name.txt" , "w"); 
         if(file == NULL)
@@ -98,6 +129,7 @@ int main(int argc , char *argv[])
 
     else if (!strcmp(argv[1] , "config") &&  !strcmp(argv[2] , "user.email")) //git config user.email " "
     {
+        CheckExistGbFolder();
         FILE *file;
         file = fopen(".gb/local-name.txt" , "w"); 
         if(file == NULL)
@@ -204,6 +236,7 @@ int main(int argc , char *argv[])
 
         if (isinvalid == 1)
         {
+            CheckExistGbFolder();
             FILE *file1;
             file1 = fopen(".gb\\alias-commands.txt" , "a");
             if(file1 == NULL)
@@ -247,15 +280,15 @@ int main(int argc , char *argv[])
 
     else if (!strcmp(argv[1] , "init")) // git init
     {
-        char cwd[1024];
-        getcwd(cwd, sizeof(cwd));
+        char cwd1[1024];
+        getcwd(cwd1, sizeof(cwd1));
 
         if (CheckExistGbFolder())
             printf("Gb repository already exists\n");
         
         else
         {
-            chdir(cwd);
+            chdir(cwd1);
             CreateDirectory(".gb" , NULL);
             SetFileAttributes(".gb" , FILE_ATTRIBUTE_HIDDEN);
             CreateDirectory(".gb\\stage" , NULL);
@@ -266,23 +299,29 @@ int main(int argc , char *argv[])
     
     else if (!strcmp(argv[1] , "add" )) // git add
     {
-        char cwd[1024];
-        getcwd(cwd, sizeof(cwd));
+        char cwd1[1024];
+        getcwd(cwd1, sizeof(cwd1));
 
         if (!CheckExistGbFolder())
             printf("fatal: not a Gb repository (or any of the parent directories)\n");
         
         else
         {
+            chdir(cwd1);
             char pathh[100];
             
-            sprintf(pathh , "%s\\%s" , cwd , argv[2]);
+            sprintf(pathh , "%s\\%s" , cwd1 , argv[2]);
 
             if(file_or_folder(pathh))
-                printf("file\n");
-    
+            {
+                char copy[50];
+                sprintf(copy , "copy %s %s\\.gb\\stage > nul" , argv[2] , cwd1 );
+                system(copy);
+            }
             else
-                printf("dir\n");
+            {
+                
+            }
         }
     }
     
