@@ -54,8 +54,6 @@ bool file_or_folder(char *path) {
         else if (s.st_mode & S_IFREG) 
             return true;
     }
-    else
-        printf("Error occurred\n");
 }
 
 int main(int argc , char *argv[])
@@ -307,20 +305,89 @@ int main(int argc , char *argv[])
         
         else
         {
-            chdir(cwd1);
-            char pathh[100];
-            
-            sprintf(pathh , "%s\\%s" , cwd1 , argv[2]);
-
-            if(file_or_folder(pathh))
+            if (!strcmp(argv[2] , "-n"))
             {
-                char copy[50];
-                sprintf(copy , "copy %s %s\\.gb\\stage > nul" , argv[2] , cwd1 );
-                system(copy);
+                chdir(cwd1);
+                struct dirent *entry;
+                DIR *dir = opendir(".");
+                
+                bool isstage = false;
+                while ((entry = readdir(dir)) != NULL)
+                {
+                    if(entry->d_type == DT_REG)
+                    {
+                        CheckExistGbFolder();
+                        struct dirent *stage;
+                        DIR *dir1 = opendir(".gb\\stage");
+                        while ((stage = readdir(dir1)) != NULL)
+                        {
+                            if (!strcmp(entry->d_name , stage->d_name))
+                            {
+                                isstage = true;
+                            }
+                            
+                        }
+                    if (isstage == true)
+                        printf("%s > stage\n" , entry->d_name);
+                    else
+                        printf("%s > unstage\n" , entry->d_name);
+                    }
+                }
             }
+            
             else
             {
-                
+                int begin = 2;
+                if(!strcmp(argv[2] , "-f"))
+                    begin = 3;
+
+                for (int i = begin; i < argc; i++)
+                {
+                    chdir(cwd1);
+                    char pathh[100];
+                    
+                    sprintf(pathh , "%s\\%s" , cwd1 , argv[i]);
+
+                    if(file_or_folder(pathh))
+                    {
+                        FILE *file;
+                        file = fopen(argv[i] , "r");
+                        if (file == NULL)
+                            printf("file does not exist\n");
+
+                        else
+                        {
+                            fclose(file);
+                            char copy[50];
+                            sprintf(copy , "copy %s %s\\.gb\\stage > nul" , argv[i] , cwd1 );
+                            system(copy);
+                            printf("file added successfully\n");
+                        }
+                    }
+                    else
+                    {
+                        struct dirent *entry;
+                        DIR *dir = opendir(argv[i]);
+                        if (dir == NULL) 
+                            printf("folder does not exist\n");
+                        
+                        else
+                        {
+                            while ((entry = readdir(dir)) != NULL)
+                            {
+                                if(entry->d_type == DT_REG)
+                                {
+                                    char copy[50];
+                                    sprintf(copy , "copy %s\\%s %s\\.gb\\stage > nul" , argv[i] , entry->d_name , cwd1 );
+                                    system(copy);
+                                } 
+                            }
+                            printf("files in folder added successfully\n");
+                            
+                        }
+                        
+                    }
+                }
             }
         }
     }
