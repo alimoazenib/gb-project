@@ -10,6 +10,24 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+char* getFileName(const char* filePath) 
+{
+    char* fileName = strrchr(filePath, '/');
+    if (fileName != NULL) {
+        return fileName + 1;
+    }
+    return (char*)filePath;
+}
+
+void replaceBackslash(char *str) 
+{
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] == '\\') {
+            str[i] = '/';
+        }
+    }
+}
+
 bool CheckExistGbFolder()
 {
     char cwd[1024];
@@ -380,10 +398,11 @@ int main(int argc , char *argv[])
                                     char copy[50];
                                     sprintf(copy , "copy %s\\%s %s\\.gb\\stage > nul" , argv[i] , entry->d_name , cwd1 );
                                     system(copy);
+                                    printf("%s added successfully\n", entry->d_name);
                                 } 
                             }
-                            printf("files in folder added successfully\n");
-                            
+                            //printf("<files in folder added successfully>\n");
+                            closedir(dir);
                         }
                         
                     }
@@ -392,5 +411,103 @@ int main(int argc , char *argv[])
         }
     }
     
+    else if (!strcmp(argv[1] , "reset" )) // git reset
+    {
+        char cwd1[1024];
+        getcwd(cwd1, sizeof(cwd1));
+
+        if (!CheckExistGbFolder())
+            printf("fatal: not a Gb repository (or any of the parent directories)\n");
+        
+        else
+        {
+            int begin = 2;
+            if(!strcmp(argv[2] , "-f"))
+                begin = 3;
+
+            for (int i = begin; i < argc; i++)
+            {
+                chdir(cwd1);
+                char pathh[100];
+                
+                sprintf(pathh , "%s\\%s" , cwd1 , argv[i]);
+
+                if(file_or_folder(pathh))
+                {
+                    FILE *file;
+                    file = fopen(argv[i] , "r");
+                    if (file == NULL)
+                        printf("file or folder does not exist\n");
+
+                    else
+                    {
+                        fclose(file);
+                        CheckExistGbFolder();
+                        struct dirent *stage;
+                        chdir(".gb\\stage");
+                        DIR *dir1 = opendir(".");
+                        replaceBackslash(argv[i]);
+                        char *filename = getFileName(argv[i]);
+                        bool isstage;
+                        while ((stage = readdir(dir1)) != NULL)
+                        {
+                            if (!strcmp(filename , stage->d_name))
+                            {
+                                char delete[50];
+                                isstage = true;
+                                sprintf(delete , "del %s > nul" , filename);
+                                system(delete);
+                            }
+                        }
+                        if(isstage == true)
+                            printf("%s unstaged successfully\n" , filename);
+                        else
+                            printf("%s is already unstage\n" , filename);
+                    }
+                }
+
+                else
+                {
+                    struct dirent *entry;
+                    DIR *dir = opendir(argv[i]);
+                    if (dir == NULL) 
+                        printf("folder does not exist\n");
+                    
+                    else
+                    {
+                        CheckExistGbFolder();
+
+                        while ((entry = readdir(dir)) != NULL)
+                        {
+                            if(entry->d_type == DT_REG)
+                            {
+                                bool isstage = false;
+                                struct dirent *stage;
+                                chdir(".gb\\stage");
+                                DIR *dir1 = opendir(".");
+                                while ((stage = readdir(dir1)) != NULL)
+                                {
+                                    if (!strcmp(entry->d_name , stage->d_name))
+                                    {
+                                        isstage = true;
+                                        remove(stage->d_name);
+                                        printf("%s unstaged successfully\n" , entry->d_name);
+                                    }
+                                    
+                                }
+                                if(isstage == false)
+                                    printf("%s is already unstage\n" , entry->d_name);
+                                
+                            } 
+                        }
+                        closedir(dir);
+                    }
+                    
+                }
+            }
+            
+        }
+    }
+
     return 0;
 }
