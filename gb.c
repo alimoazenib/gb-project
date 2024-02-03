@@ -381,10 +381,13 @@ int main(int argc , char *argv[])
             CreateDirectory(".gb\\stage" , NULL);
             CreateDirectory(".gb\\commits" , NULL);
             CreateDirectory(".gb\\commits\\master" , NULL);
+            CreateDirectory(".gb\\stage\\laststage" , NULL);
+
             FILE *file;
             file = fopen(".gb\\commits\\curbranch.txt" , "w");
             fprintf(file , "master");
             fclose(file);
+
             printf("Initialized empty Gb repository\n");
         }
     }
@@ -431,6 +434,15 @@ int main(int argc , char *argv[])
             
             else
             {
+                chdir(".gb\\stage\\laststage");
+                struct dirent *lstage;
+                DIR *dir1 = opendir(".");
+                while ((lstage = readdir(dir1)) != NULL)
+                {
+                    if(lstage->d_type == DT_REG && strcmp(lstage->d_name , ".") && strcmp(lstage->d_name , ".."))
+                        remove(lstage->d_name);
+                }   
+
                 int begin = 2;
                 if(!strcmp(argv[2] , "-f"))
                     begin = 3;
@@ -456,6 +468,8 @@ int main(int argc , char *argv[])
                             char copy[50];
                             sprintf(copy , "copy %s\\%s .gb\\stage > nul" , cwd1 , argv[i]);
                             system(copy);
+                            sprintf(copy , "copy %s\\%s .gb\\stage\\laststage > nul" , cwd1 , argv[i]);
+                            system(copy);
                             printf("file added successfully\n");
                         }
                     }
@@ -474,6 +488,8 @@ int main(int argc , char *argv[])
                                 {
                                     char copy[50];
                                     sprintf(copy , "copy %s\\%s\\%s .gb\\stage > nul" , cwd1 , argv[i] , entry->d_name);
+                                    system(copy);
+                                    sprintf(copy , "copy %s\\%s\\%s .gb\\stage\\laststage > nul" , cwd1 , argv[i] , entry->d_name);
                                     system(copy);
                                     printf("%s added successfully\n", entry->d_name);
                                 } 
