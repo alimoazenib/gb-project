@@ -511,6 +511,32 @@ int main(int argc , char *argv[])
         if (!CheckExistGbFolder())
             printf("fatal: not a Gb repository (or any of the parent directories)\n");
         
+        else if (!strcmp(argv[2] , "-undo"))
+        {
+            chdir(".gb\\stage\\laststage");
+            struct dirent *lstage;
+            DIR *dir = opendir(".");
+            while ((lstage = readdir(dir)) != NULL)
+            {
+                if(lstage->d_type == DT_REG)
+                {
+                    struct dirent *stage;
+                    chdir("..");
+                    DIR *dir1 = opendir(".");
+                    while ((stage = readdir(dir1)) != NULL)
+                    {
+                        if (!strcmp(lstage->d_name , stage->d_name))
+                        {
+                            remove(stage->d_name);
+                        }
+                    }
+                    chdir("laststage");
+                    
+                } 
+            }
+            printf("The last staged files returned to unstaged mode\n");
+        }
+        
         else
         {
             int begin = 2;
