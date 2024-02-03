@@ -403,7 +403,15 @@ int main(int argc , char *argv[])
         
         else
         {
-            if (!strcmp(argv[2] , "-n"))
+            if (!strcmp(argv[2] , "-redo"))
+            {
+                char move[50];
+                sprintf(move , "move .gb\\stage\\unstage\\* .gb\\stage > nul");
+                system(move);
+                printf("All unstaged files are back in stage mode\n");
+            }
+
+            else if (!strcmp(argv[2] , "-n"))
             {
                 chdir(cwd1);
                 struct dirent *entry;
