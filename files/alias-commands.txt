@@ -1,1 +1,0 @@
->b>gb add 1\test1.txt?>bs>gb init?
