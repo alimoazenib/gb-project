@@ -382,6 +382,7 @@ int main(int argc , char *argv[])
             CreateDirectory(".gb\\commits" , NULL);
             CreateDirectory(".gb\\commits\\master" , NULL);
             CreateDirectory(".gb\\stage\\laststage" , NULL);
+            CreateDirectory(".gb\\stage\\unstage" , NULL);
 
             FILE *file;
             file = fopen(".gb\\commits\\curbranch.txt" , "w");
@@ -486,6 +487,7 @@ int main(int argc , char *argv[])
                             {
                                 if(entry->d_type == DT_REG)
                                 {
+                                    CheckExistGbFolder();
                                     char copy[50];
                                     sprintf(copy , "copy %s\\%s\\%s .gb\\stage > nul" , cwd1 , argv[i] , entry->d_name);
                                     system(copy);
@@ -527,7 +529,9 @@ int main(int argc , char *argv[])
                     {
                         if (!strcmp(lstage->d_name , stage->d_name))
                         {
-                            remove(stage->d_name);
+                            char move[50];
+                            sprintf(move , "move %s unstage > nul" , stage->d_name);
+                            system(move);
                         }
                     }
                     chdir("laststage");
@@ -571,10 +575,11 @@ int main(int argc , char *argv[])
                         {
                             if (!strcmp(filename , stage->d_name))
                             {
-                                char delete[50];
+                                char move[50];
                                 isstage = true;
-                                sprintf(delete , "del %s > nul" , filename);
-                                system(delete);
+                                printf("%s\n" , filename);
+                                sprintf(move , "move %s unstage > nul" , filename);
+                                system(move);
                             }
                         }
                         if(isstage == true)
@@ -608,7 +613,9 @@ int main(int argc , char *argv[])
                                     if (!strcmp(entry->d_name , stage->d_name))
                                     {
                                         isstage = true;
-                                        remove(stage->d_name);
+                                        char move[50];
+                                        sprintf(move , "move %s unstage > nul" , stage->d_name);
+                                        system(move);
                                         printf("%s unstaged successfully\n" , entry->d_name);
                                     }
                                     
