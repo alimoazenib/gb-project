@@ -9,6 +9,77 @@
 #include <windows.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
+
+int countFilesInDirectory(const char *path) {
+    struct dirent *entry;
+    DIR *dir = opendir(path);
+    int count = 0;
+
+    if (dir == NULL) {
+        perror("Error opening directory");
+        return -1;
+    }
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_REG) { // Check if it's a regular file
+            count++;
+        }
+    }
+
+    closedir(dir);
+    return count;
+}
+
+int compareFileDates(char *global, char *local) 
+{
+    FILE *global1;
+    global1 = fopen(global , "r"); 
+    if(global1 == NULL)
+        return 2;
+    else
+        fclose(global1);
+
+    FILE *local1;
+    local1 = fopen(local , "r"); 
+    if(local1 == NULL)
+        return 1;
+    else
+        fclose(local1);
+
+    struct stat attr1, attr2;
+    if(stat(global, &attr1) == 0 && stat(local, &attr2) == 0) 
+    {
+        if(attr1.st_mtime > attr2.st_mtime) 
+            return 1; // global is newer
+
+        else if(attr1.st_mtime > attr2.st_mtime) 
+            return 2; // local is newer
+    }
+}
+
+bool checkEmptyFolder(const char *folderPath) 
+{
+    DIR *dir = opendir(folderPath);
+    struct dirent *entry;
+    int isEmpty = 1;
+
+    while ((entry = readdir(dir)) != NULL) 
+    {
+        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) 
+        {
+            isEmpty = 0;
+            break;
+        }
+    }
+
+    closedir(dir);
+
+    if (isEmpty) 
+        return true;
+    else 
+        return false;
+}
 
 char* getFileName(const char* filePath) 
 {
@@ -309,6 +380,11 @@ int main(int argc , char *argv[])
             SetFileAttributes(".gb" , FILE_ATTRIBUTE_HIDDEN);
             CreateDirectory(".gb\\stage" , NULL);
             CreateDirectory(".gb\\commits" , NULL);
+            CreateDirectory(".gb\\commits\\master" , NULL);
+            FILE *file;
+            file = fopen(".gb\\commits\\curbranch.txt" , "w");
+            fprintf(file , "master");
+            fclose(file);
             printf("Initialized empty Gb repository\n");
         }
     }
@@ -376,8 +452,9 @@ int main(int argc , char *argv[])
                         else
                         {
                             fclose(file);
+                            CheckExistGbFolder();
                             char copy[50];
-                            sprintf(copy , "copy %s %s\\.gb\\stage > nul" , argv[i] , cwd1 );
+                            sprintf(copy , "copy %s\\%s .gb\\stage > nul" , cwd1 , argv[i]);
                             system(copy);
                             printf("file added successfully\n");
                         }
@@ -396,12 +473,11 @@ int main(int argc , char *argv[])
                                 if(entry->d_type == DT_REG)
                                 {
                                     char copy[50];
-                                    sprintf(copy , "copy %s\\%s %s\\.gb\\stage > nul" , argv[i] , entry->d_name , cwd1 );
+                                    sprintf(copy , "copy %s\\%s\\%s .gb\\stage > nul" , cwd1 , argv[i] , entry->d_name);
                                     system(copy);
                                     printf("%s added successfully\n", entry->d_name);
                                 } 
                             }
-                            //printf("<files in folder added successfully>\n");
                             closedir(dir);
                         }
                         
@@ -507,6 +583,134 @@ int main(int argc , char *argv[])
             }
             
         }
+    }
+
+    else if (!strcmp(argv[1] , "commit" )) // git commit
+    {
+        char cwd1[1024];
+        getcwd(cwd1, sizeof(cwd1));
+
+        if (!CheckExistGbFolder())
+            printf("fatal: not a Gb repository (or any of the parent directories)\n");
+        
+        else
+        {
+            bool stage = checkEmptyFolder(".gb\\stage");
+
+            if (stage == true)
+                printf("The stage is empty\n");
+            
+            else
+            {
+                if (argv[3] == NULL)
+                    printf("error: the commit message is empty\n");
+
+                else if (strlen(argv[3]) > 72)
+                    printf("the commit message is out of size\n");
+                
+                else
+                {
+                    int which_name;
+                    int which_email;
+
+                    char name[20];
+                    char email[50];
+
+                    which_name = compareFileDates(".gb\\local-name.txt" , "D:\\gb-project\\files\\global-name.txt");
+                    which_email = compareFileDates(".gb\\local-email.txt", "D:\\gb-project\\files\\global-email.txt");
+
+                    printf("%d %d\n\n", which_name , which_email);
+                    if (which_name == 1)
+                    {
+                        FILE *localname;
+                        localname = fopen(".gb\\local-name.txt" , "r");
+                        fgets(name , sizeof(name) , localname);
+                        fclose(localname);
+                    }
+
+                    else
+                    {
+                        FILE *globalname;
+                        globalname = fopen("D:\\gb-project\\files\\global-name.txt" , "r");
+                        fgets(name , sizeof(name) , globalname);
+                        fclose(globalname);
+                    }
+                    
+                    if (which_email == 1)
+                    {
+                        FILE *localemail;
+                        localemail = fopen(".gb\\local-email.txt" , "r");
+                        fgets(email , sizeof(email) , localemail);
+                        fclose(localemail);
+                    }
+
+                    else
+                    {
+                        FILE *globalemail;
+                        globalemail = fopen("D:\\gb-project\\files\\global-email.txt" , "r");
+                        fgets(email , sizeof(email) , globalemail);
+                        fclose(globalemail);
+                    }
+                    
+
+                    chdir(".gb\\commits");
+                    FILE *file;
+                    file = fopen("curbranch.txt" , "r");
+                    char curbranch[20];
+                    fgets(curbranch , sizeof(curbranch) , file);
+
+                    struct dirent *branch;
+                    DIR *dir1 = opendir(curbranch);
+
+                    int max_name = 100;
+                    while ((branch = readdir(dir1)) != NULL)
+                    {
+                        if(branch->d_type == DT_DIR && atoi(branch->d_name) > max_name)
+                            max_name = atoi(branch->d_name);
+                    }
+
+                    closedir(dir1);
+                    chdir(curbranch);
+                    char commitid[10];
+                    sprintf(commitid , "%d" , max_name+1);
+                    CreateDirectory(commitid , NULL);
+
+                    time_t t = time(NULL);
+                    struct tm tm = *localtime(&t);
+
+
+                    chdir(commitid);
+
+                    FILE *commitinfo;
+                    commitinfo = fopen("commitinfo.txt" , "w");
+                    fprintf(commitinfo , "id: %s\nbranch: %s\nmessage: %s\nuser.name: %s\nuser.email: %s\ntime: %d-%02d-%02d %02d:%02d:%02d",
+                                        commitid , curbranch , argv[3] , name , email ,
+                                         tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+                                         tm.tm_hour, tm.tm_min, tm.tm_sec);
+                    fclose(file);
+
+                    chdir("..");
+
+
+                    char copy[50];
+                    sprintf(copy , "copy %d\\* %d > nul" , max_name , max_name+1);
+                    system(copy);
+
+                    CheckExistGbFolder();
+
+                    sprintf(copy , "copy .gb\\stage\\* .gb\\commits\\%s\\%d > nul", curbranch , max_name+1);
+                    system(copy);
+                    
+                    printf("Commit id:     %s\n" , commitid);
+                    printf("Time:          %d-%02d-%02d %02d:%02d:%02d\n",
+                        tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+                        tm.tm_hour, tm.tm_min, tm.tm_sec);
+                    printf("commit messag: %s\n" , argv[3]);
+                } 
+
+            }
+        }
+        
     }
 
     return 0;
