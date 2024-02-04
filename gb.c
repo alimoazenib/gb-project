@@ -11,6 +11,32 @@
 #include <sys/types.h>
 #include <time.h>
 
+int checkWordInFile(const char *filePath, const char *word) 
+{
+    FILE *file = fopen(filePath, "r");
+    if (file == NULL) 
+    {
+        perror("Error opening file");
+        return -1;
+    }
+
+    char buffer[1000];
+    int found = 0;
+
+    while (fgets(buffer, sizeof(buffer), file) != NULL) 
+    {
+        if (strstr(buffer, word) != NULL) 
+        {
+            found = 1;
+            break;
+        }
+    }
+
+    fclose(file);
+
+    return found;
+}
+
 int countFilesInDirectory(const char *path) {
     struct dirent *entry;
     DIR *dir = opendir(path);
@@ -66,7 +92,7 @@ bool checkEmptyFolder(const char *folderPath)
 
     while ((entry = readdir(dir)) != NULL) 
     {
-        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) 
+        if (entry->d_type == DT_REG && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) 
         {
             isEmpty = 0;
             break;
@@ -767,6 +793,137 @@ int main(int argc , char *argv[])
             }
         }
         
+    }
+
+    else if (!strcmp(argv[1] , "log" )) // git log
+    {
+        if (!CheckExistGbFolder())
+            printf("fatal: not a Gb repository (or any of the parent directories)\n");
+        
+        else if(argc > 2)
+        {
+            if (!strcmp(argv[2] , "-n"))
+            {
+                int n = atoi(argv[3]);
+
+                chdir(".gb\\commits");
+                
+                struct dirent *commits;
+                DIR *dir1 = opendir(".");
+
+                int max_name = 100;
+                while ((commits = readdir(dir1)) != NULL)
+                {
+                    if(commits->d_type == DT_DIR && atoi(commits->d_name) > max_name)
+                        max_name = atoi(commits->d_name);
+                }
+
+                closedir(dir1);
+
+                while (1)
+                {
+                    if (n == 0)
+                        break;
+
+                    char commitid[10];
+                    sprintf(commitid , "%d" , max_name);
+                    char pathtoopen[50];
+                    sprintf(pathtoopen , "%s\\commitinfo.txt" , commitid);
+                    FILE *file1;
+                    file1 = fopen(pathtoopen , "r");
+                    if (file1 == NULL)
+                        break;
+                    char ch;
+                    printf("\n");
+                    while((ch = fgetc(file1)) != EOF)
+                        printf("%c" , ch);
+                    printf("\n\n");
+                    max_name--;
+                    n--;
+                }
+            }
+
+            else if (!strcmp(argv[2] , "-branch") || !strcmp(argv[2] , "-author") || !strcmp(argv[2] , "-search"))
+            {
+                chdir(".gb\\commits");
+                
+                struct dirent *commits;
+                DIR *dir1 = opendir(".");
+
+                int max_name = 100;
+                while ((commits = readdir(dir1)) != NULL)
+                {
+                    if(commits->d_type == DT_DIR && atoi(commits->d_name) > max_name)
+                        max_name = atoi(commits->d_name);
+                }
+
+                closedir(dir1);
+
+                while (1)
+                {
+                    char commitid[10];
+                    sprintf(commitid , "%d" , max_name);
+                    char pathtoopen[50];
+                    sprintf(pathtoopen , "%s\\commitinfo.txt" , commitid);
+                    FILE *file1;
+                    file1 = fopen(pathtoopen , "r");
+                    if (file1 == NULL)
+                        break;
+                    char ch;
+                    printf("\n");
+
+                    bool existword = checkWordInFile(pathtoopen , argv[3]);
+
+                    if (existword)
+                    {
+                        while((ch = fgetc(file1)) != EOF)
+                            printf("%c" , ch);
+                        printf("\n\n");
+                    }
+                    
+                    max_name--;
+                }
+            }
+            
+        }
+
+        else
+        {
+            chdir(".gb\\commits");
+            FILE *file;
+            file = fopen("curbranch.txt" , "r");
+            char curbranch[20];
+            fgets(curbranch , sizeof(curbranch) , file);
+            struct dirent *commits;
+            DIR *dir1 = opendir(".");
+
+            int max_name = 100;
+            while ((commits = readdir(dir1)) != NULL)
+            {
+                if(commits->d_type == DT_DIR && atoi(commits->d_name) > max_name)
+                    max_name = atoi(commits->d_name);
+            }
+
+            closedir(dir1);
+
+            while (1)
+            {
+                char commitid[10];
+                sprintf(commitid , "%d" , max_name);
+                char pathtoopen[50];
+                sprintf(pathtoopen , "%s\\commitinfo.txt" , commitid);
+                FILE *file1;
+                file1 = fopen(pathtoopen , "r");
+                if (file1 == NULL)
+                    break;
+                char ch;
+                while((ch = fgetc(file1)) != EOF)
+                    printf("%c" , ch);
+                printf("\n\n");
+                max_name--;
+            }
+        }
+
     }
 
     return 0;
