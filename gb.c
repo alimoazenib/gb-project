@@ -926,5 +926,41 @@ int main(int argc , char *argv[])
 
     }
 
+    else if (!strcmp(argv[1] , "branch" )) // git branch
+    {
+        if (!CheckExistGbFolder())
+            printf("fatal: not a Gb repository (or any of the parent directories)\n");
+        
+        else if (argc == 3)
+        {
+            bool exist = checkWordInFile(".gb\\commits\\branches.txt" , argv[2]);
+
+            if (exist)
+                printf("This branch already exists\n");
+
+            else
+            {
+                FILE *file;
+                file = fopen(".gb\\commits\\branches.txt" , "a");
+                fprintf(file , "\n");
+                fprintf(file , argv[2]);
+                fclose(file);
+                printf("Branch created successfully\n");
+            }
+
+        }
+        
+        else
+        {
+            FILE *file1;
+            file1 = fopen(".gb\\commits\\branches.txt" , "r");
+            char ch;
+            while((ch = fgetc(file1)) != EOF)
+                printf("%c" , ch);
+            printf("\n");
+        }
+        
+    }
+
     return 0;
 }
