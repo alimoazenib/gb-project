@@ -645,9 +645,6 @@ int main(int argc , char *argv[])
 
     else if (!strcmp(argv[1] , "commit" )) // git commit
     {
-        char cwd1[1024];
-        getcwd(cwd1, sizeof(cwd1));
-
         if (!CheckExistGbFolder())
             printf("fatal: not a Gb repository (or any of the parent directories)\n");
         
@@ -668,6 +665,9 @@ int main(int argc , char *argv[])
                 
                 else
                 {
+                    int countfiletocommit;
+                    countfiletocommit = countFilesInDirectory(".gb\\stage");
+
                     int which_name;
                     int which_email;
 
@@ -716,18 +716,17 @@ int main(int argc , char *argv[])
                     char curbranch[20];
                     fgets(curbranch , sizeof(curbranch) , file);
 
-                    struct dirent *branch;
+                    struct dirent *commits;
                     DIR *dir1 = opendir(".");
 
                     int max_name = 100;
-                    while ((branch = readdir(dir1)) != NULL)
+                    while ((commits = readdir(dir1)) != NULL)
                     {
-                        if(branch->d_type == DT_DIR && atoi(branch->d_name) > max_name)
-                            max_name = atoi(branch->d_name);
+                        if(commits->d_type == DT_DIR && atoi(commits->d_name) > max_name)
+                            max_name = atoi(commits->d_name);
                     }
 
                     closedir(dir1);
-                    chdir(curbranch);
                     char commitid[10];
                     sprintf(commitid , "%d" , max_name+1);
                     CreateDirectory(commitid , NULL);
@@ -740,8 +739,8 @@ int main(int argc , char *argv[])
 
                     FILE *commitinfo;
                     commitinfo = fopen("commitinfo.txt" , "w");
-                    fprintf(commitinfo , "id: %s\nbranch: %s\nmessage: %s\nuser.name: %s\nuser.email: %s\ntime: %d-%02d-%02d %02d:%02d:%02d",
-                                        commitid , curbranch , argv[3] , name , email ,
+                    fprintf(commitinfo , "id: %s\nbranch: %s\nmessage: %s\nuser.name: %s\nuser.email: %s\nnumber of files: %d\ntime: %d-%02d-%02d %02d:%02d:%02d",
+                                        commitid , curbranch , argv[3] , name , email , countfiletocommit ,
                                          tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
                                          tm.tm_hour, tm.tm_min, tm.tm_sec);
                     fclose(file);
@@ -755,7 +754,7 @@ int main(int argc , char *argv[])
 
                     CheckExistGbFolder();
 
-                    sprintf(copy , "move .gb\\stage\\* .gb\\commits\\%s\\%d > nul", curbranch , max_name+1);
+                    sprintf(copy , "move .gb\\stage\\* .gb\\commits\\%d > nul" , max_name+1);
                     system(copy);
                     
                     printf("Commit id:     %s\n" , commitid);
@@ -769,7 +768,6 @@ int main(int argc , char *argv[])
         }
         
     }
-
 
     return 0;
 }
