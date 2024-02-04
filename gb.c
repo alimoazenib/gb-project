@@ -218,7 +218,7 @@ int main(int argc , char *argv[])
     {
         CheckExistGbFolder();
         FILE *file;
-        file = fopen(".gb/local-name.txt" , "w"); 
+        file = fopen(".gb/local-email.txt" , "w"); 
         if(file == NULL)
         {
             printf("fatal: not in a gb directory\n");
@@ -380,7 +380,6 @@ int main(int argc , char *argv[])
             SetFileAttributes(".gb" , FILE_ATTRIBUTE_HIDDEN);
             CreateDirectory(".gb\\stage" , NULL);
             CreateDirectory(".gb\\commits" , NULL);
-            CreateDirectory(".gb\\commits\\master" , NULL);
             CreateDirectory(".gb\\stage\\laststage" , NULL);
             CreateDirectory(".gb\\stage\\unstage" , NULL);
 
@@ -388,6 +387,11 @@ int main(int argc , char *argv[])
             file = fopen(".gb\\commits\\curbranch.txt" , "w");
             fprintf(file , "master");
             fclose(file);
+
+            FILE *file1;
+            file1 = fopen(".gb\\commits\\branches.txt" , "w");
+            fprintf(file1 , "master");
+            fclose(file1);
 
             printf("Initialized empty Gb repository\n");
         }
@@ -417,9 +421,9 @@ int main(int argc , char *argv[])
                 struct dirent *entry;
                 DIR *dir = opendir(".");
                 
-                bool isstage = false;
                 while ((entry = readdir(dir)) != NULL)
                 {
+                    bool isstage = false;
                     if(entry->d_type == DT_REG)
                     {
                         CheckExistGbFolder();
@@ -428,9 +432,7 @@ int main(int argc , char *argv[])
                         while ((stage = readdir(dir1)) != NULL)
                         {
                             if (!strcmp(entry->d_name , stage->d_name))
-                            {
                                 isstage = true;
-                            }
                             
                         }
                     if (isstage == true)
@@ -585,7 +587,6 @@ int main(int argc , char *argv[])
                             {
                                 char move[50];
                                 isstage = true;
-                                printf("%s\n" , filename);
                                 sprintf(move , "move %s unstage > nul" , filename);
                                 system(move);
                             }
@@ -716,7 +717,7 @@ int main(int argc , char *argv[])
                     fgets(curbranch , sizeof(curbranch) , file);
 
                     struct dirent *branch;
-                    DIR *dir1 = opendir(curbranch);
+                    DIR *dir1 = opendir(".");
 
                     int max_name = 100;
                     while ((branch = readdir(dir1)) != NULL)
