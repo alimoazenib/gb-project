@@ -676,7 +676,6 @@ int main(int argc , char *argv[])
                     which_name = compareFileDates(".gb\\local-name.txt" , "D:\\gb-project\\files\\global-name.txt");
                     which_email = compareFileDates(".gb\\local-email.txt", "D:\\gb-project\\files\\global-email.txt");
 
-                    printf("%d %d\n\n", which_name , which_email);
                     if (which_name == 1)
                     {
                         FILE *localname;
@@ -755,7 +754,7 @@ int main(int argc , char *argv[])
 
                     CheckExistGbFolder();
 
-                    sprintf(copy , "copy .gb\\stage\\* .gb\\commits\\%s\\%d > nul", curbranch , max_name+1);
+                    sprintf(copy , "move .gb\\stage\\* .gb\\commits\\%s\\%d > nul", curbranch , max_name+1);
                     system(copy);
                     
                     printf("Commit id:     %s\n" , commitid);
@@ -769,6 +768,7 @@ int main(int argc , char *argv[])
         }
         
     }
+
 
     return 0;
 }
