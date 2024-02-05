@@ -11,6 +11,45 @@
 #include <sys/types.h>
 #include <time.h>
 
+void printLinesWithWord(const char *filename, const char *word) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("Unable to open file.\n");
+        return;
+    }
+
+    char line[1000];
+    while (fgets(line, sizeof(line), file)) {
+        if (strstr(line, word) != NULL) {
+            printf("%s", line);
+        }
+    }
+    printf("\n");
+
+    fclose(file);
+}
+
+void findWordInFile(const char* filename, const char* word) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("Cannot open file %s\n", filename);
+        return;
+    }
+
+    char line[1000];
+    int lineNumber = 1;
+
+    while (fgets(line, sizeof(line), file)) {
+        if (strstr(line, word) != NULL) {
+            printf("Line %d: %s", lineNumber, line);
+        }
+        lineNumber++;
+    }
+    printf("\n");
+
+    fclose(file);
+}
+
 int compareFiles(const char *file1, const char *file2) {
     FILE *f1 = fopen(file1, "rb");
     FILE *f2 = fopen(file2, "rb");
@@ -1458,6 +1497,50 @@ int main(int argc , char *argv[])
             }
         }
     }    
+    
+    else if (!strcmp(argv[1] , "grep" )) // git grep
+    {
+        char cwd1[1024];
+        getcwd(cwd1, sizeof(cwd1));
+
+        if (!CheckExistGbFolder())
+            printf("fatal: not a Gb repository (or any of the parent directories)\n");
+
+        if (argc == 9)
+        {
+            char cwd2[1024];
+            getcwd(cwd2, sizeof(cwd2));
+
+            char pathtofind[50];
+            sprintf(pathtofind , "%s\\.gb\\commits\\%s\\%s" , cwd2 , argv[7] , argv[3]);
+
+            findWordInFile(pathtofind , argv[5]);
+        }
+
+        else if (argc == 8)
+        {
+            char cwd2[1024];
+            getcwd(cwd2, sizeof(cwd2));
+
+            char pathtofind[50];
+            sprintf(pathtofind , "%s\\.gb\\commits\\%s\\%s" , cwd2 , argv[7] , argv[3]);
+
+            printLinesWithWord(pathtofind , argv[5]);
+        }
+        
+        else if(argc == 7)
+        {
+            chdir(cwd1);
+            findWordInFile(argv[3] , argv[5]);
+        }
+
+        else if(argc == 6)
+        {
+            chdir(cwd1);
+            printLinesWithWord(argv[3] , argv[5]);
+        }
+
+    }
     
     return 0;
 }
