@@ -11,6 +11,38 @@
 #include <sys/types.h>
 #include <time.h>
 
+int compareFiles(const char *file1, const char *file2) {
+    FILE *f1 = fopen(file1, "rb");
+    FILE *f2 = fopen(file2, "rb");
+
+    if (f1 == NULL || f2 == NULL) {
+        return 0;
+    }
+
+    int byte1, byte2;
+
+    while (1) {
+        byte1 = fgetc(f1);
+        byte2 = fgetc(f2);
+
+        if (byte1 != byte2) {
+
+            fclose(f1);
+            fclose(f2);
+            return 0;
+        }
+
+        if (byte1 == EOF || byte2 == EOF) {
+            break;
+        }
+    }
+
+    fclose(f1);
+    fclose(f2);
+
+    return 1;
+}
+
 char *search_file_recursive(const char *dir_path, const char *file_name) {
     DIR *dir;
     struct dirent *entry;
@@ -1124,7 +1156,7 @@ int main(int argc , char *argv[])
                     if (file1 == NULL)
                         break;
 
-                    bool existword = checkWordInFile(pathtoopen , head);
+                    bool existword = checkWordInFile(pathtoopen , curbranch);
 
                     if (existword)
                     {
@@ -1168,16 +1200,16 @@ int main(int argc , char *argv[])
                 fclose(file);
 
                 struct dirent *commits;
-                DIR *dir1 = opendir(".");
+                DIR *dir = opendir(".");
 
                 int max_name = 100;
-                while ((commits = readdir(dir1)) != NULL)
+                while ((commits = readdir(dir)) != NULL)
                 {
                     if(commits->d_type == DT_DIR && atoi(commits->d_name) > max_name)
                         max_name = atoi(commits->d_name);
                 }
 
-                closedir(dir1);
+                closedir(dir);
 
                 while (1)
                 {
@@ -1226,5 +1258,82 @@ int main(int argc , char *argv[])
         }
     }
 
+    else if (!strcmp(argv[1] , "status" )) // git status
+    {
+        char cwd1[1024];
+        getcwd(cwd1, sizeof(cwd1));
+        char pathfile1[50];
+        char pathfile2[50];
+
+        if (!CheckExistGbFolder())
+            printf("fatal: not a Gb repository (or any of the parent directories)\n");
+
+        else
+        {
+            chdir(cwd1);
+            struct dirent *entry;
+            DIR *dir = opendir(".");
+            
+            while ((entry = readdir(dir)) != NULL)
+            {
+                bool isexistinlastcommit = false;
+                bool isstage = false;
+                bool ismodified = false;
+                if(entry->d_type == DT_REG)
+                {
+                    sprintf(pathfile1 , "%s\\%s" , cwd1 , entry->d_name);
+                    
+                    CheckExistGbFolder();
+                    chdir(".gb\\commits");
+                    char cwd2[1024];
+                    getcwd(cwd2, sizeof(cwd2));
+                    int max_name = 100;
+                    struct dirent *commits;
+                    DIR *dir1 = opendir(".");
+                    while ((commits = readdir(dir1)) != NULL)
+                    {
+                        if(commits->d_type == DT_DIR && atoi(commits->d_name) > max_name)
+                        max_name = atoi(commits->d_name);
+                    }
+                    closedir(dir1);
+
+                    char commitid[10];
+                    sprintf(commitid , "%d" , max_name);
+
+                    struct dirent *head;
+                    DIR *dir2 = opendir(commitid);
+
+                    while ((head = readdir(dir2)) != NULL)
+                    {
+                        if (!strcmp(entry->d_name , head->d_name))
+                        {
+                            isexistinlastcommit = true;
+                            sprintf(pathfile2 , "%s\\%s\\%s" , cwd2 , commitid , head->d_name);
+                            ismodified = compareFiles(pathfile1 , pathfile2);
+                        }
+                    }
+                    closedir(dir2);
+
+                    CheckExistGbFolder();
+                    struct dirent *stage;
+                    DIR *dir3 = opendir(".gb\\stage");
+                    while ((stage = readdir(dir3)) != NULL)
+                    {
+                        if (!strcmp(entry->d_name , stage->d_name))
+                            isstage = true;
+                    }
+                    closedir(dir3);
+                    if (isexistinlastcommit && ismodified == false && isstage)
+                        printf("%s +M\n" , entry->d_name);
+                    else if(isexistinlastcommit && ismodified == false && isstage == false)
+                        printf("%s -M\n" , entry->d_name);
+                    else if(isexistinlastcommit == false && isstage)
+                        printf("%s +A\n" , entry->d_name);
+                    else if(isexistinlastcommit == false && isstage == false)
+                        printf("%s -A\n" , entry->d_name);
+                }
+            }
+        }
+    }    
     return 0;
 }
