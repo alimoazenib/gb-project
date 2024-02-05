@@ -11,6 +11,58 @@
 #include <sys/types.h>
 #include <time.h>
 
+char *search_file_recursive(const char *dir_path, const char *file_name) {
+    DIR *dir;
+    struct dirent *entry;
+    char *result = NULL;
+
+    dir = opendir(dir_path);
+    if (dir == NULL) 
+    {
+        perror("opendir");
+        return NULL;
+    }
+
+    while ((entry = readdir(dir)) != NULL) 
+    {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, ".gb") == 0) 
+            continue;
+
+        char entry_path[1000];
+        snprintf(entry_path, sizeof(entry_path), "%s\\%s", dir_path, entry->d_name);
+
+        if (entry->d_type == DT_DIR) 
+        {
+            result = search_file_recursive(entry_path, file_name);
+            if (result != NULL) 
+                break;
+        } 
+        else if (entry->d_type == DT_REG && strcmp(entry->d_name, file_name) == 0) 
+        {
+            result = entry_path;
+            break;
+        }
+    }
+
+    closedir(dir);
+    return result;
+}
+
+bool intorstr(char *input)
+{
+    input[strcspn(input, "\n")] = 0;
+    bool is_number = 1;
+    for (int i = 0; i < strlen(input); i++) 
+    {
+        if (!isdigit(input[i]))
+        {
+            is_number = 0;
+            break;
+        }
+    }
+    return is_number;
+}
+
 int checkWordInFile(const char *filePath, const char *word) 
 {
     FILE *file = fopen(filePath, "r");
@@ -782,6 +834,11 @@ int main(int argc , char *argv[])
 
                     sprintf(copy , "move .gb\\stage\\* .gb\\commits\\%d > nul" , max_name+1);
                     system(copy);
+
+                    FILE *file2;
+                    file2 = fopen(".gb\\commits\\curcommit.txt" , "w");
+                    fprintf(file2 , "100");
+                    fclose(file2);
                     
                     printf("Commit id:     %s\n" , commitid);
                     printf("Time:          %d-%02d-%02d %02d:%02d:%02d\n",
@@ -834,10 +891,10 @@ int main(int argc , char *argv[])
                     if (file1 == NULL)
                         break;
                     char ch;
-                    printf("\n");
                     while((ch = fgetc(file1)) != EOF)
                         printf("%c" , ch);
                     printf("\n\n");
+                    fclose(file1);
                     max_name--;
                     n--;
                 }
@@ -870,7 +927,6 @@ int main(int argc , char *argv[])
                     if (file1 == NULL)
                         break;
                     char ch;
-                    printf("\n");
 
                     bool existword = checkWordInFile(pathtoopen , argv[3]);
 
@@ -880,7 +936,7 @@ int main(int argc , char *argv[])
                             printf("%c" , ch);
                         printf("\n\n");
                     }
-                    
+                    fclose(file1);
                     max_name--;
                 }
             }
@@ -920,6 +976,7 @@ int main(int argc , char *argv[])
                 while((ch = fgetc(file1)) != EOF)
                     printf("%c" , ch);
                 printf("\n\n");
+                fclose(file1);
                 max_name--;
             }
         }
@@ -960,6 +1017,213 @@ int main(int argc , char *argv[])
             printf("\n");
         }
         
+    }
+
+    else if (!strcmp(argv[1] , "checkout" )) // git checkout
+    {
+        if (!CheckExistGbFolder())
+        {
+            printf("fatal: not a Gb repository (or any of the parent directories)\n");
+            return 0;
+        }
+       
+        bool stage = checkEmptyFolder(".gb\\stage");
+
+        if (stage == false)
+        {
+            printf("Error: The stage is not empty\n");
+            return 0;
+        }
+
+        bool isnumber = intorstr(argv[2]);
+
+        if (isnumber)
+        {
+            chdir(".gb\\commits");
+                
+            struct dirent *commits;
+            DIR *dir1 = opendir(".");
+
+            int max_name = 100;
+            while ((commits = readdir(dir1)) != NULL)
+            {
+                if(commits->d_type == DT_DIR && atoi(commits->d_name) > max_name)
+                    max_name = atoi(commits->d_name);
+            }
+
+            closedir(dir1);
+
+            while (1)
+            {
+                char commitid[10];
+                sprintf(commitid , "%d" , max_name);
+                if (!strcmp(commitid , argv[2]))
+                {
+                    struct dirent *head;
+                    DIR *dir1 = opendir(commitid);
+
+                    while ((head = readdir(dir1)) != NULL)
+                    {
+                        if(head->d_type == DT_REG && strcmp(head->d_name , "commitinfo.txt") && strcmp(head->d_name , ".") && strcmp(head->d_name , ".."))
+                        {
+                            char cwd[1024];
+                            getcwd(cwd, sizeof(cwd));
+
+                            CheckExistGbFolder();
+
+                            char cwd1[1024];
+                            getcwd(cwd1, sizeof(cwd1));
+                            char *toPaste = search_file_recursive(cwd1 , head->d_name);
+
+                            chdir(cwd);
+                            
+                            char copy[50];
+                            sprintf(copy , "copy %s\\%s %s > nul" , commitid , head->d_name , toPaste);
+                            system(copy);
+                        }
+                    }
+                    printf("checkout to commit successfully\n");
+                    break;
+                }
+                max_name--;
+            }
+        }
+
+        else
+        {
+            if (!strcmp(argv[2] , "HEAD"))
+            {
+                chdir(".gb\\commits");
+
+                char head[20];
+                FILE *curbranch;
+                curbranch = fopen("curbranch.txt" , "r");
+                fgets(head , sizeof(head) , curbranch);
+                fclose(curbranch);
+                    
+                struct dirent *commits;
+                DIR *dir1 = opendir(".");
+
+                int max_name = 100;
+                while ((commits = readdir(dir1)) != NULL)
+                {
+                    if(commits->d_type == DT_DIR && atoi(commits->d_name) > max_name)
+                        max_name = atoi(commits->d_name);
+                }
+
+                closedir(dir1);
+
+                while (1)
+                {
+                    char commitid[10];
+                    sprintf(commitid , "%d" , max_name);
+                    char pathtoopen[50];
+                    sprintf(pathtoopen , "%s\\commitinfo.txt" , commitid);
+                    FILE *file1;
+                    file1 = fopen(pathtoopen , "r");
+                    if (file1 == NULL)
+                        break;
+
+                    bool existword = checkWordInFile(pathtoopen , head);
+
+                    if (existword)
+                    {
+                        struct dirent *head;
+                        DIR *dir1 = opendir(commitid);
+
+                        while ((head = readdir(dir1)) != NULL)
+                        {
+                            if(head->d_type == DT_REG && strcmp(head->d_name , "commitinfo.txt") && strcmp(head->d_name , ".") && strcmp(head->d_name , ".."))
+                            {
+                                char cwd[1024];
+                                getcwd(cwd, sizeof(cwd));
+
+                                CheckExistGbFolder();
+
+                                char cwd1[1024];
+                                getcwd(cwd1, sizeof(cwd1));
+                                char *toPaste = search_file_recursive(cwd1 , head->d_name);
+
+                                chdir(cwd);
+                                
+                                char copy[50];
+                                sprintf(copy , "copy %s\\%s %s > nul" , commitid , head->d_name , toPaste);
+                                system(copy);
+                            }
+                        }
+                        break;
+                    }
+                    max_name--;
+                }
+                printf("checkout to branch successfully\n");
+            }
+            
+            else
+            {
+                chdir(".gb\\commits");
+                    
+                FILE *file;
+                file = fopen("curbranch.txt" , "w");
+                fprintf(file , argv[2]);
+                fclose(file);
+
+                struct dirent *commits;
+                DIR *dir1 = opendir(".");
+
+                int max_name = 100;
+                while ((commits = readdir(dir1)) != NULL)
+                {
+                    if(commits->d_type == DT_DIR && atoi(commits->d_name) > max_name)
+                        max_name = atoi(commits->d_name);
+                }
+
+                closedir(dir1);
+
+                while (1)
+                {
+                    char commitid[10];
+                    sprintf(commitid , "%d" , max_name);
+                    char pathtoopen[50];
+                    sprintf(pathtoopen , "%s\\commitinfo.txt" , commitid);
+                    FILE *file1;
+                    file1 = fopen(pathtoopen , "r");
+                    if (file1 == NULL)
+                        break;
+
+                    bool existword = checkWordInFile(pathtoopen , argv[2]);
+
+                    if (existword)
+                    {
+                        struct dirent *head;
+                        DIR *dir1 = opendir(commitid);
+
+                        while ((head = readdir(dir1)) != NULL)
+                        {
+                            if(head->d_type == DT_REG && strcmp(head->d_name , "commitinfo.txt") && strcmp(head->d_name , ".") && strcmp(head->d_name , ".."))
+                            {
+                                char cwd[1024];
+                                getcwd(cwd, sizeof(cwd));
+
+                                CheckExistGbFolder();
+
+                                char cwd1[1024];
+                                getcwd(cwd1, sizeof(cwd1));
+                                char *toPaste = search_file_recursive(cwd1 , head->d_name);
+
+                                chdir(cwd);
+                                
+                                char copy[50];
+                                sprintf(copy , "copy %s\\%s %s > nul" , commitid , head->d_name , toPaste);
+                                system(copy);
+                            }
+                        }
+                        break;
+                    }
+                    max_name--;
+                }
+                printf("checkout to branch successfully\n");
+            }
+        }
     }
 
     return 0;
