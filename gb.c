@@ -932,7 +932,7 @@ int main(int argc , char *argv[])
                 }
             }
 
-            else if (!strcmp(argv[2] , "-branch") || !strcmp(argv[2] , "-author") || !strcmp(argv[2] , "-search"))
+            else if (!strcmp(argv[2] , "-branch") || !strcmp(argv[2] , "-author"))
             {
                 chdir(".gb\\commits");
                 
@@ -972,6 +972,55 @@ int main(int argc , char *argv[])
                     max_name--;
                 }
             }
+
+            else if (!strcmp(argv[2] , "-search"))
+            {
+                chdir(".gb\\commits");
+                
+                struct dirent *commits;
+                DIR *dir1 = opendir(".");
+
+                int max_name = 100;
+                while ((commits = readdir(dir1)) != NULL)
+                {
+                    if(commits->d_type == DT_DIR && atoi(commits->d_name) > max_name)
+                        max_name = atoi(commits->d_name);
+                }
+
+                closedir(dir1);
+
+                while (1)
+                {
+                    char commitid[10];
+                    sprintf(commitid , "%d" , max_name);
+                    char pathtoopen[50];
+                    sprintf(pathtoopen , "%s\\commitinfo.txt" , commitid);
+                    FILE *file1;
+                    file1 = fopen(pathtoopen , "r");
+                    if (file1 == NULL)
+                        break;
+                    char ch;
+
+                    bool existword;
+                    for (int i = 3; i < argc; i++)
+                    {
+                        existword = checkWordInFile(pathtoopen , argv[i]);
+                        if (existword)
+                        break;
+                    }
+                    
+
+                    if (existword)
+                    {
+                        while((ch = fgetc(file1)) != EOF)
+                            printf("%c" , ch);
+                        printf("\n\n");
+                    }
+                    fclose(file1);
+                    max_name--;
+                }
+            }
+            
             
         }
 
