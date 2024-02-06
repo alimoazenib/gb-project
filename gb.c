@@ -11,6 +11,30 @@
 #include <sys/types.h>
 #include <time.h>
 
+void removeWordFromFile(const char *fileName, const char *wordToRemove) {
+    FILE *file = fopen(fileName, "r");
+    FILE *tempFile = fopen("temp.txt", "w");
+
+    if (file == NULL || tempFile == NULL) {
+        printf("Error opening file.\n");
+        return;
+    }
+
+    char buffer[255];
+
+    while (fscanf(file, "%s", buffer) != EOF) {
+        if (strcmp(buffer, wordToRemove) != 0) {
+            fprintf(tempFile, "%s ", buffer);
+        }
+    }
+
+    fclose(file);
+    fclose(tempFile);
+
+    remove(fileName);
+    rename("temp.txt", fileName);
+}
+
 void printLinesWithWord(const char *filename, const char *word) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
@@ -360,7 +384,7 @@ int main(int argc , char *argv[])
         }
         fprintf(file , "%s" , argv[argc - 1]);
         fclose(file);
-            
+        printf("local name has been applied successfuly\n");
     }
 
     else if (!strcmp(argv[1] , "config") &&  !strcmp(argv[2] , "user.email")) //git config user.email " "
@@ -375,6 +399,7 @@ int main(int argc , char *argv[])
         }
         fprintf(file , "%s" , argv[argc - 1]);
         fclose(file);
+        printf("local email has been applied successfuly\n");
     }
 
     else if (!strcmp(argv[1] , "config") &&  !strcmp(argv[3] , "user.name" )) //git config -–global user.name " "
@@ -437,7 +462,7 @@ int main(int argc , char *argv[])
                 FILE *file1;
                 file1 = fopen("D:\\gb-project\\files\\alias-commands.txt" , "a");
                 fprintf(file1 , ">%s>%s?" , argv[3]+6 , argv[4]);
-                printf("global alias successfully created\n");
+                printf("Global alias successfully created\n");
                 fclose(file1);
             }
 
@@ -514,7 +539,7 @@ int main(int argc , char *argv[])
         
     }
 
-    else if (!strcmp(argv[1] , "init")) // git init
+    else if (!strcmp(argv[1] , "init"      )) // git init
     {
         char cwd1[1024];
         getcwd(cwd1, sizeof(cwd1));
@@ -542,11 +567,20 @@ int main(int argc , char *argv[])
             fprintf(file1 , "master");
             fclose(file1);
 
+            FILE *file2;
+            file2 = fopen(".gb\\commits\\hooks.txt" , "w");
+            fprintf(file2 , "todo-check\neof-blank-space\nformat-check\nbalance-braces");
+            fclose(file2);
+
+            FILE *file3;
+            file3 = fopen(".gb\\commits\\hookstocheck.txt" , "w");
+            fclose(file3);
+
             printf("Initialized empty Gb repository\n");
         }
     }
     
-    else if (!strcmp(argv[1] , "add" )) // git add
+    else if (!strcmp(argv[1] , "add"       )) // git add
     {
         char cwd1[1024];
         getcwd(cwd1, sizeof(cwd1));
@@ -664,7 +698,7 @@ int main(int argc , char *argv[])
         }
     }
     
-    else if (!strcmp(argv[1] , "reset" )) // git reset
+    else if (!strcmp(argv[1] , "reset"     )) // git reset
     {
         char cwd1[1024];
         getcwd(cwd1, sizeof(cwd1));
@@ -792,7 +826,7 @@ int main(int argc , char *argv[])
         }
     }
 
-    else if (!strcmp(argv[1] , "commit" )) // git commit
+    else if (!strcmp(argv[1] , "commit"    )) // git commit
     {
         if (!CheckExistGbFolder())
             printf("fatal: not a Gb repository (or any of the parent directories)\n");
@@ -923,7 +957,7 @@ int main(int argc , char *argv[])
         
     }
 
-    else if (!strcmp(argv[1] , "log" )) // git log
+    else if (!strcmp(argv[1] , "log"       )) // git log
     {
         if (!CheckExistGbFolder())
             printf("fatal: not a Gb repository (or any of the parent directories)\n");
@@ -1103,7 +1137,7 @@ int main(int argc , char *argv[])
 
     }
 
-    else if (!strcmp(argv[1] , "branch" )) // git branch
+    else if (!strcmp(argv[1] , "branch"    )) // git branch
     {
         if (!CheckExistGbFolder())
             printf("fatal: not a Gb repository (or any of the parent directories)\n");
@@ -1139,7 +1173,7 @@ int main(int argc , char *argv[])
         
     }
 
-    else if (!strcmp(argv[1] , "checkout" )) // git checkout
+    else if (!strcmp(argv[1] , "checkout"  )) // git checkout
     {
         if (!CheckExistGbFolder())
         {
@@ -1355,6 +1389,14 @@ int main(int argc , char *argv[])
             else
             {
                 chdir(".gb\\commits");
+
+                bool exist = checkWordInFile("branches.txt" , argv[2]);
+
+                if (!exist)
+                {
+                    printf("This branch does not exist\n");
+                    return 0;
+                }
                     
                 FILE *file;
                 file = fopen("curbranch.txt" , "w");
@@ -1420,7 +1462,7 @@ int main(int argc , char *argv[])
         }
     }
 
-    else if (!strcmp(argv[1] , "status" )) // git status
+    else if (!strcmp(argv[1] , "status"    )) // git status
     {
         char cwd1[1024];
         getcwd(cwd1, sizeof(cwd1));
@@ -1498,7 +1540,7 @@ int main(int argc , char *argv[])
         }
     }    
     
-    else if (!strcmp(argv[1] , "grep" )) // git grep
+    else if (!strcmp(argv[1] , "grep"      )) // git grep
     {
         char cwd1[1024];
         getcwd(cwd1, sizeof(cwd1));
@@ -1540,6 +1582,70 @@ int main(int argc , char *argv[])
             printLinesWithWord(argv[3] , argv[5]);
         }
 
+    }
+    
+    else if (!strcmp(argv[1] , "pre-commit")) // git merge
+    {
+        char cwd1[1024];
+        getcwd(cwd1, sizeof(cwd1));
+
+        if (!CheckExistGbFolder())
+            printf("fatal: not a Gb repository (or any of the parent directories)\n");
+
+        else if(!strcmp(argv[2] , "hooks"))
+        {
+            FILE *file1;
+            file1 = fopen(".gb\\commits\\hooks.txt" , "r");
+            char ch;
+            while((ch = fgetc(file1)) != EOF)
+                printf("%c" , ch);
+            printf("\n");
+            fclose(file1);
+        }
+
+        else if (!strcmp(argv[2] , "add"))
+        {
+            bool exist = checkWordInFile(".gb\\commits\\hooks.txt" , argv[4]);
+
+            if (!exist)
+            {
+                printf("This hook does not exist\n");
+                return 0;
+            }
+
+            FILE *file;
+            file = fopen(".gb\\commits\\hookstocheck.txt" , "a");
+            fprintf(file , argv[4]);
+            fprintf(file , "\n");
+            fclose(file);
+            printf("hook added successfully\n");
+        }
+
+        else if(!strcmp(argv[2] , "applied"))
+        {
+            FILE *file1;
+            file1 = fopen(".gb\\commits\\hookstocheck.txt" , "r");
+            char ch;
+            while((ch = fgetc(file1)) != EOF)
+                printf("%c" , ch);
+            printf("\n");
+            fclose(file1);
+        }
+
+        else if(!strcmp(argv[2] , "remove"))
+        {
+            bool exist = checkWordInFile(".gb\\commits\\hookstocheck.txt" , argv[4]);
+
+            if (!exist)
+            {
+                printf("This hook does not exist\n");
+                return 0;
+            }
+            removeWordFromFile(".gb\\commits\\hookstocheck.txt" , argv[4]);
+            printf("hook removed successfully\n");
+        }
+        
+        
     }
     
     return 0;
