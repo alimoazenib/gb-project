@@ -1,1 +1,1 @@
-gb add?gb reset?gb commit -m?gb config?gb init?gb reset?gb status?gb log?gb branch?gb checkout?
+gb add?gb reset?gb commit -m?gb config?gb init?gb reset?gb status?gb log?gb branch?gb checkout?gb grep?gb pre-commit?
